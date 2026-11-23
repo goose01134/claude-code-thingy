@@ -8,22 +8,25 @@ struct RootView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color(model.palette.bg).ignoresSafeArea()
-            // Not the keyboard area: the page shrinks above the keyboard, like Android's adjustResize.
-            WebContainer(bridge: model.bridge).ignoresSafeArea(.container)
+        GeometryReader { geo in
+            ZStack(alignment: .top) {
+                Color(model.palette.bg).ignoresSafeArea()
+                // Not the keyboard area: the page shrinks above the keyboard, like Android's adjustResize.
+                WebContainer(bridge: model.bridge).ignoresSafeArea(.container)
 
-            if let screen = model.nativeScreen {
-                Group {
-                    switch screen {
-                    case .apps: AppsScreen(model: model)
-                    case .stats: StatsScreen(model: model)
+                if let screen = model.nativeScreen {
+                    Group {
+                        switch screen {
+                        case .apps: AppsScreen(model: model)
+                        case .stats: StatsScreen(model: model)
+                        }
                     }
+                    // The web tab bar's own height plus the home-indicator area below it.
+                    .padding(.bottom, model.tabInset + geo.safeAreaInsets.bottom)
+                    .ignoresSafeArea(.container, edges: .bottom)
+                    .environment(\.colorScheme, model.dark ? .dark : .light)
+                    .transition(.opacity)
                 }
-                .padding(.bottom, model.tabInset)
-                .ignoresSafeArea(.container, edges: .bottom)
-                .environment(\.colorScheme, model.dark ? .dark : .light)
-                .transition(.opacity)
             }
         }
         .familyActivityPicker(isPresented: $model.showPicker, selection: model.selectionBinding)

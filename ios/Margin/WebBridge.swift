@@ -63,8 +63,10 @@ final class WebBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
     // MARK: Native -> web
 
-    func evaluate(_ js: String) {
-        guard loaded else { return }
+    /// Runs script in the page. Before it has loaded, only replies to the page's own requests go
+    /// through (`force`); everything else is covered by the boot script.
+    func evaluate(_ js: String, force: Bool = false) {
+        guard loaded || force else { return }
         webView.evaluateJavaScript(js, completionHandler: nil)
     }
 
@@ -79,7 +81,7 @@ final class WebBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     }
 
     private func resolve(_ id: String, _ payload: Any) {
-        evaluate("M.native.resolve(\(Self.literal(id)), \(Self.literal(Self.json(payload))));")
+        evaluate("M.native.resolve(\(Self.literal(id)), \(Self.literal(Self.json(payload))));", force: true)
     }
 
     // MARK: Web -> native
@@ -91,7 +93,7 @@ final class WebBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         switch method {
         case "saveState":
             if let json = arg as? String, let merged = model.saveFromWeb(json) {
-                evaluate("window.__marginBoot.state = \(Self.literal(merged)); M.store.reload();")
+                evaluate("window.__marginBoot.state = \(Self.literal(merged)); M.store.reload();", force: true)
             }
         case "grantEmergency":
             if let json = arg as? String { model.emergencyFromWeb(json) }
@@ -117,6 +119,8 @@ final class WebBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         loaded = true
+        // Permissions (e.g. notifications) may have been looked up while the page was loading.
+        pushUpdate()
         #if DEBUG
         if let route = UserDefaults.standard.string(forKey: "MarginRoute") {
             evaluate("M.app.navigate(\(Self.literal(route)));")

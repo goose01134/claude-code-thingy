@@ -77,7 +77,9 @@
     if (!M.native.ios) return;
     var show = !LOCK_MODE && !M.onboarding.isActive() && !lock.visible && !UI.sheet.isOpen() &&
       (route.name === 'apps' || route.name === 'stats');
-    M.native.showNative(show ? route.name : null, tabbar ? tabbar.getBoundingClientRect().height : 0);
+    // The tab bar's own height, without the home-indicator area (the iPhone shell adds that itself).
+    var barHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tabbar-h')) || 62;
+    M.native.showNative(show ? route.name : null, barHeight);
   }
 
   function navigate(name, sub, force) {
