@@ -31,6 +31,7 @@
   }
 
   function render(s) {
+    if (S.ios) return '<section class="screen apps"></section>'; // drawn natively on iPhone (AppsScreen.swift)
     var tracked = S.trackedIds().map(S.app);
     var others = S.untrackedIds().map(S.app);
     var limitsTotal = U.sum(tracked.map(function (a) { return a.limit; }));

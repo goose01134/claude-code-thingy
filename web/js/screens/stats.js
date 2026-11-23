@@ -98,6 +98,7 @@
   }
 
   function render(s) {
+    if (S.ios) return '<section class="screen stats"></section>'; // drawn natively on iPhone (StatsScreen.swift)
     var totals = S.weekTotals();
     var full = totals.slice(0, 6);
     var within = full.filter(function (v) { return v <= s.allowance; }).length;

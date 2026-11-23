@@ -152,6 +152,9 @@ window.M = window.M || {};
 
   function isNative() { return flag('native') === '1'; }
 
+  /** The iPhone shell passes "#native=1&platform=ios". */
+  function isIOS() { return isNative() && flag('platform') === 'ios'; }
+
   function systemPrefersDark() {
     if (typeof window.__marginSysDark === 'boolean') return window.__marginSysDark; // updated by the Android shell
     var f = flag('sysdark');
@@ -180,6 +183,7 @@ window.M = window.M || {};
   }
 
   if (isNative()) docEl.className += ' native';
+  if (isIOS()) docEl.className += ' ios';
   if (!supportsVars) docEl.className += ' no-vars';
   if (!detectFlexGap()) docEl.className += ' no-flexgap';
 
@@ -207,6 +211,7 @@ window.M = window.M || {};
     glyph: glyph,
     flag: flag,
     isNative: isNative,
+    isIOS: isIOS,
     supportsVars: supportsVars,
     systemPrefersDark: systemPrefersDark
   };

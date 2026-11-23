@@ -17,10 +17,15 @@
     return 'Almost there. A good moment to put the phone down.';
   }
 
-  /** On Android, missing permissions come first: without them nothing is measured or blocked. */
+  /** On the phone, missing permissions come first: without them nothing is measured or blocked. */
   function permissionBanner() {
     var p = M.app.permissions();
     if (!p) return '';
+    if (!p.usage && M.native.ios) {
+      return '<button class="banner warn" data-action="perm" data-which="usage">' + icon('eye', 20) +
+        '<span class="banner-main"><span class="banner-title">Allow Screen Time access</span>' +
+        '<span class="banner-sub">Margin can’t measure or limit apps until you do.</span></span>' + icon('chevron', 18) + '</button>';
+    }
     if (!p.usage) {
       return '<button class="banner warn" data-action="perm" data-which="usage">' + icon('eye', 20) +
         '<span class="banner-main"><span class="banner-title">Allow usage access</span>' +
@@ -94,6 +99,17 @@
       appRows = '<div class="empty">No apps are counted yet.<br><button class="link" data-action="go" data-to="apps">Choose apps</button></div>';
     }
 
+    // iPhone: Screen Time keeps app names private, so per-app details live on the native tabs.
+    var appsTitle = 'Today’s apps';
+    if (S.ios && apps.length) {
+      appsTitle = 'Counted apps';
+      appRows =
+        UI.row({ lead: UI.tileIcon('grid'), title: apps.length + (apps.length === 1 ? ' app counted' : ' apps counted'),
+          sub: 'Limited with Apple’s Screen Time', chevron: true, action: 'go', attrs: 'data-to="apps"' }) +
+        UI.row({ lead: UI.tileIcon('stats'), title: 'Today’s breakdown', sub: 'Time per app, hour by hour',
+          chevron: true, action: 'go', attrs: 'data-to="stats"' });
+    }
+
     var demoControls = S.mode === 'demo'
       ? '<section class="block proto">' +
         '<div class="block-head"><h2 class="overline">Demo controls</h2></div>' +
@@ -127,8 +143,8 @@
       '<div class="metric"><span class="metric-label">Remaining</span><span class="metric-value tnum' + (locked ? ' is-warn' : '') + '">' + U.fmt(remaining) + '</span></div>' +
       '</div>' +
       '<section class="block">' +
-      '<div class="block-head"><h2 class="h2">Today’s apps</h2><button class="link" data-action="go" data-to="apps">Manage</button></div>' +
-      '<div class="list inset-app">' + appRows + '</div>' +
+      '<div class="block-head"><h2 class="h2">' + appsTitle + '</h2><button class="link" data-action="go" data-to="apps">Manage</button></div>' +
+      '<div class="list ' + (S.ios && apps.length ? 'inset-icon' : 'inset-app') + '">' + appRows + '</div>' +
       '</section>' +
       demoControls +
       '</div></section>';

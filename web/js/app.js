@@ -52,6 +52,7 @@
     if (screen.after) screen.after(viewport, state, isNav);
     UI.hydrate(viewport);
     renderTabbar();
+    syncNative();
 
     // Keep typing uninterrupted when data refreshes underneath a search field.
     if (focusKey) {
@@ -69,6 +70,14 @@
       return '<button class="tab' + (active ? ' active' : '') + '" data-action="go" data-to="' + t.id + '"' +
         (active ? ' aria-current="page"' : '') + '>' + icon(t.icon, 24) + '<span>' + t.label + '</span></button>';
     }).join('');
+  }
+
+  /** iPhone: the Apps and Statistics tabs are native screens drawn over this page, above the tab bar. */
+  function syncNative() {
+    if (!M.native.ios) return;
+    var show = !LOCK_MODE && !M.onboarding.isActive() && !lock.visible && !UI.sheet.isOpen() &&
+      (route.name === 'apps' || route.name === 'stats');
+    M.native.showNative(show ? route.name : null, tabbar ? tabbar.getBoundingClientRect().height : 0);
   }
 
   function navigate(name, sub, force) {
@@ -149,6 +158,7 @@
       lockLayer.classList.add('open');
       lockLayer.setAttribute('aria-hidden', 'false');
     }
+    syncNative();
   }
 
   function renderLockout() {
@@ -160,6 +170,7 @@
     lock.visible = false;
     lockLayer.classList.remove('open');
     lockLayer.setAttribute('aria-hidden', 'true');
+    syncNative();
   }
 
   /** Demo only: present the lockout when usage crosses a limit, as if you were in the app. */
@@ -292,6 +303,7 @@
   M.app = {
     render: render,
     navigate: navigate,
+    syncNative: syncNative,
     applyTheme: applyTheme,
     isDark: isDark,
     permissions: function () { if (!perms) refreshPerms(); return perms; },
@@ -314,7 +326,7 @@
       if (route.name !== 'home') { navigate('home'); return true; }
       return false;
     },
-    /** The Android app came back to the foreground (e.g. from system settings). */
+    /** The app came back to the foreground (e.g. from system settings), or native data changed. */
     onResume: function () {
       paused = false;
       refreshPerms();

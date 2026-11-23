@@ -23,6 +23,7 @@
   function permissionsGroup() {
     var p = M.app.permissions();
     if (!p) return '';
+    if (M.native.ios) return iosPermissionsGroup(p);
     var demo = S.mode === 'demo';
     var rows =
       UI.row({ lead: UI.tileIcon('eye'), title: 'Usage access', sub: 'Measures time spent in apps',
@@ -40,6 +41,19 @@
       ? 'Margin is measuring your app time and will close counted apps when time’s up.'
       : 'Margin can’t close apps until the permissions above are on.';
     if (demo) foot += ' In the browser demo these are simulated.';
+    return UI.group('Permissions', rows, foot, 'inset-icon');
+  }
+
+  /** iPhone: Screen Time access replaces Android's usage access and overlay permissions. */
+  function iosPermissionsGroup(p) {
+    var rows =
+      UI.row({ lead: UI.tileIcon('eye'), title: 'Screen Time access', sub: 'Measures and limits counted apps',
+        value: permValue(p.usage, true), chevron: !p.usage, action: p.usage ? null : 'perm', attrs: 'data-which="usage"' }) +
+      UI.row({ lead: UI.tileIcon('bell'), title: 'Notifications', sub: 'Reminders and summaries',
+        value: permValue(p.notifications, true), chevron: !p.notifications, action: p.notifications ? null : 'perm', attrs: 'data-which="notifications"' });
+    var foot = p.blocking
+      ? 'Margin uses Apple’s Screen Time to measure your counted apps and close them when time’s up.'
+      : 'Margin can’t close apps until Screen Time access is on.';
     return UI.group('Permissions', rows, foot, 'inset-icon');
   }
 

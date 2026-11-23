@@ -1,12 +1,14 @@
 /* Margin — settings, app catalogue, usage data and derived values.
    On Android, usage comes from the system (via M.native) and settings are stored natively so
-   the blocking service can enforce them. In a browser, Margin runs in demo mode with
-   simulated usage. */
+   the blocking service can enforce them. On iPhone, Screen Time reports one total for the
+   counted apps and keeps their names private, so per-app numbers live in native screens.
+   In a browser, Margin runs in demo mode with simulated usage. */
 (function (M) {
   'use strict';
 
   var U = M.util;
   var NATIVE = M.native.available;
+  var IOS = !!M.native.ios;
   var VERSION = 2;
   var STATE_KEY = 'margin.state.v2';
   var DEMO_KEY = 'margin.demo.v2';
@@ -107,7 +109,7 @@
   function saveDemo() { if (demo) writeLocal(DEMO_KEY, demo); }
 
   function emptyUsage() {
-    return { ready: false, today: {}, days: [{}, {}, {}, {}, {}, {}], hourly: zeros(24), weeks: [] };
+    return { ready: false, today: {}, days: [{}, {}, {}, {}, {}, {}], hourly: zeros(24), weeks: [], total: 0, dayTotals: zeros(6) };
   }
 
   // ---------------------------------------------------------------- catalogue
@@ -201,6 +203,8 @@
   function isTracked(id) { return state.tracked.indexOf(id) >= 0; }
 
   function trackedIds() {
+    // iPhone: one ID per app picked in Apple's app picker, kept up to date by the native side.
+    if (IOS) return state.tracked.slice();
     // Hide apps that were uninstalled (once the real catalogue is known).
     var known = Object.keys(catalog).length > 0;
     return state.tracked.filter(function (id) { return !known || catalog[id]; });
@@ -222,7 +226,10 @@
 
   function allIds() { return Object.keys(catalog).sort(byWeekThenName); }
 
-  function usedToday() { return U.sum(trackedIds().map(function (id) { return app(id).used; })); }
+  function usedToday() {
+    if (IOS) return usage.total || 0;
+    return U.sum(trackedIds().map(function (id) { return app(id).used; }));
+  }
   function remaining() { return Math.max(0, state.allowance - usedToday()); }
 
   function todayKey() { return U.dayKey(state.resetTime, new Date()); }
@@ -262,6 +269,7 @@
 
   /** Seven daily totals for tracked apps, oldest first, ending today. */
   function weekTotals() {
+    if (IOS) return usage.dayTotals.slice(-6).concat([usedToday()]);
     var out = zeros(7);
     trackedIds().forEach(function (id) {
       var a = app(id);
@@ -355,12 +363,16 @@
         while (days.length < 6) days.unshift({});
         var weeks = (data.weeks || []).slice();
         while (weeks.length && !weeks[0]) weeks.shift(); // weeks before the phone had any data
+        var dayTotals = (data.dayTotals || []).slice(-6);
+        while (dayTotals.length < 6) dayTotals.unshift(0);
         usage = {
           ready: true,
           today: data.today,
           days: days,
           hourly: data.hourly && data.hourly.length === 24 ? data.hourly : zeros(24),
-          weeks: weeks
+          weeks: weeks,
+          total: data.total || 0,       // iPhone only: today's total for all counted apps
+          dayTotals: dayTotals          // iPhone only: the previous six days' totals
         };
       } else {
         usage.ready = true;
@@ -453,6 +465,7 @@
 
   M.store = {
     mode: NATIVE ? 'native' : 'demo',
+    ios: IOS,
     get: get,
     update: update,
     subscribe: subscribe,

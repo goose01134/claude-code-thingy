@@ -1,0 +1,68 @@
+# Builds the Margin iPhone app on a Mac and runs it in the iPhone simulator.
+# No Apple account is needed for this: simulator builds aren't signed.
+name: iOS
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - "web/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    name: Build and screenshot (simulator)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build for the iPhone simulator
+        working-directory: ios
+        run: |
+          if ! xcodebuild -project Margin.xcodeproj -scheme Margin -configuration Debug \
+              -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+              -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1; then
+            echo "::group::Last 80 lines of the build log"; tail -80 build.log; echo "::endgroup::"
+            echo "Build errors:"
+            grep -E "error:" build.log | sort -u | head -80
+            exit 1
+          fi
+          echo "Build succeeded. Warnings in Margin's own code:"
+          grep -E "/ios/.*warning:" build.log | sed 's|.*/ios/||' | sort -u | head -60 || true
+
+      - name: Take screenshots in the simulator
+        run: ios/scripts/screenshots.sh ios/build/Build/Products/Debug-iphonesimulator/Margin.app docs/screenshots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: docs/screenshots
+
+      - name: Commit screenshots to the branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Update iPhone simulator screenshots [skip ci]"
+          git push || echo "Branch moved on; skipping the screenshot commit."

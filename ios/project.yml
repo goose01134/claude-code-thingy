@@ -1,0 +1,198 @@
+# XcodeGen spec for the Margin iPhone app. `xcodegen generate` turns it into Margin.xcodeproj
+# (the GitHub workflow does this on a Mac; the .xcodeproj is not committed).
+name: Margin
+
+options:
+  bundleIdPrefix: app.margin
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    # Change these two if the IDs are taken in your Apple developer account.
+    APP_BUNDLE_ID: app.margin.wellbeing
+    APP_GROUP_ID: group.app.margin.wellbeing
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+targets:
+  Margin:
+    type: application
+    platform: iOS
+    sources:
+      - path: Margin
+      - path: Shared
+      - path: SharedReport
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
+      - path: ../web
+        type: folder
+        buildPhase: resources
+    info:
+      path: Margin/Info.plist
+      properties:
+        CFBundleDisplayName: Margin
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        LSRequiresIPhoneOS: true
+        MarginAppGroup: $(APP_GROUP_ID)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+    entitlements:
+      path: Margin/Margin.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - $(APP_GROUP_ID)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - target: MarginMonitor
+      - target: MarginShield
+      - target: MarginShieldAction
+      - target: MarginReport
+
+  # Wakes at the reset time, at usage thresholds and for focus schedules; decides what to block.
+  MarginMonitor:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: MarginMonitor
+      - path: Shared/Core
+      - path: Shared/Engine
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
+    info:
+      path: MarginMonitor/Info.plist
+      properties:
+        CFBundleDisplayName: Margin Monitor
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        MarginAppGroup: $(APP_GROUP_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.deviceactivity.monitor-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).MonitorExtension
+    entitlements:
+      path: MarginMonitor/MarginMonitor.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - $(APP_GROUP_ID)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).monitor
+
+  # Margin's look for Apple's block screen.
+  MarginShield:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: MarginShield
+      - path: Shared/Core
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
+    info:
+      path: MarginShield/Info.plist
+      properties:
+        CFBundleDisplayName: Margin Shield
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        MarginAppGroup: $(APP_GROUP_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldConfigurationExtension
+    entitlements:
+      path: MarginShield/MarginShield.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - $(APP_GROUP_ID)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).shield
+
+  # The block screen's buttons, including emergency access.
+  MarginShieldAction:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: MarginShieldAction
+      - path: Shared/Core
+      - path: Shared/Engine
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
+    info:
+      path: MarginShieldAction/Info.plist
+      properties:
+        CFBundleDisplayName: Margin Shield Action
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        MarginAppGroup: $(APP_GROUP_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShieldActionExtension
+    entitlements:
+      path: MarginShieldAction/MarginShieldAction.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - $(APP_GROUP_ID)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).shieldaction
+
+  # Draws the Statistics screen from Screen Time's usage data.
+  MarginReport:
+    type: extensionkit-extension
+    platform: iOS
+    sources:
+      - path: MarginReport
+      - path: SharedReport
+      - path: Shared/Core
+      - path: Shared/UI
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
+    info:
+      path: MarginReport/Info.plist
+      properties:
+        CFBundleDisplayName: Margin Report
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        MarginAppGroup: $(APP_GROUP_ID)
+        EXAppExtensionAttributes:
+          EXExtensionPointIdentifier: com.apple.deviceactivityui.report-extension
+    entitlements:
+      path: MarginReport/MarginReport.entitlements
+      properties:
+        com.apple.developer.family-controls: true
+        com.apple.security.application-groups:
+          - $(APP_GROUP_ID)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).report
+
+schemes:
+  Margin:
+    build:
+      targets:
+        Margin: all
+    run:
+      config: Debug
+    archive:
+      config: Release

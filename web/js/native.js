@@ -1,5 +1,5 @@
-/* Margin — thin wrapper around the Android bridge (window.MarginNative).
-   In a browser the bridge is absent and the app runs in demo mode. */
+/* Margin — thin wrapper around the native bridge (window.MarginNative), from the Android shell
+   or the iPhone shell. In a browser the bridge is absent and the app runs in demo mode. */
 (function (M) {
   'use strict';
 
@@ -16,6 +16,9 @@
   M.native = {
     available: available,
     info: available ? (parse(N.info()) || {}) : {},
+    /** Running in the iPhone app. Screen Time keeps app names private there, so the Apps and
+        Statistics tabs are native screens and usage is a single total. */
+    ios: available && M.util.isIOS(),
 
     getState: function () { return available ? parse(N.getState()) : null; },
     saveState: function (state) { if (available) N.saveState(JSON.stringify(state)); },
@@ -26,6 +29,10 @@
     grantEmergency: function () { return available ? parse(N.grantEmergency()) : null; },
     lockAction: function (action) { if (available) N.lockAction(action); },
     setDarkBars: function (dark) { if (available) { try { N.setDarkBars(dark); } catch (e) { /* optional */ } } },
+    /** iPhone: show a native screen ('apps', 'stats') above the tab bar, or none. */
+    showNative: function (screen, inset) { if (available && N.showNative) N.showNative(screen || null, inset || 0); },
+    /** iPhone: open Apple's app picker. */
+    pickApps: function () { if (available && N.pickApps) N.pickApps(); },
 
     /** Asynchronous request: the native side answers later through resolve(). */
     request: function (method, cb) {

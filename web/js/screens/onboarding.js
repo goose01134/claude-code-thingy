@@ -34,7 +34,10 @@
     s.tracked.forEach(function (id) { draft.tracked[id] = true; });
   }
 
-  function selectedIds() { return Object.keys(draft.tracked).filter(function (id) { return draft.tracked[id]; }); }
+  function selectedIds() {
+    if (S.ios) return S.get().tracked.slice(); // picked in Apple's app picker
+    return Object.keys(draft.tracked).filter(function (id) { return draft.tracked[id]; });
+  }
 
   /** Pre-select the usual suspects the first time the app list is shown. */
   function preselect() {
@@ -91,6 +94,23 @@
     return n ? 'Continue with ' + n + (n === 1 ? ' app' : ' apps') : 'Choose at least one app';
   }
 
+  /** iPhone: apps are chosen in Apple's app picker, which keeps the choice private. */
+  function iosApps() {
+    var n = selectedIds().length;
+    return {
+      body: '<p class="ob-eyebrow">Your apps</p>' +
+        '<h1 class="ob-title">Which apps should count?</h1>' +
+        '<p class="ob-lede">Pick them in Apple’s app list. Apple keeps your choice private: Margin can limit these apps but never sees which ones they are.</p>' +
+        '<div class="perm-card' + (n ? ' ok' : '') + '">' +
+        '<span class="perm-icon">' + icon('grid', 20) + '</span>' +
+        '<span class="perm-main"><span class="perm-title">' + (n ? n + (n === 1 ? ' app chosen' : ' apps chosen') : 'No apps chosen yet') + '</span>' +
+        '<span class="perm-body">' + (n ? 'Apps, categories and websites all count.' : 'Social media, video, games: whatever pulls you in.') + '</span></span>' +
+        '<button class="btn btn-secondary btn-sm" data-action="ob-pick-apps">' + (n ? 'Change' : 'Choose') + '</button>' +
+        '</div>',
+      primary: n ? { label: countLabel(), action: 'ob-next', countLabel: true } : { label: 'Choose apps', action: 'ob-pick-apps' }
+    };
+  }
+
   // ---------------------------------------------------------------- steps
 
   var VIEWS = {
@@ -137,19 +157,25 @@
 
     usage: function () {
       var p = perms();
+      var ios = S.ios;
       return {
         body: '<p class="ob-eyebrow">Permission</p>' +
           '<h1 class="ob-title">See where your time goes</h1>' +
-          '<p class="ob-lede">To measure how long you spend in each app, Android asks you to allow usage access for Margin.</p>' +
-          permCard('usage', 'Usage access', p.usage ? 'Allowed. Thank you.' : 'In the list that opens, choose Margin and turn on “Permit usage access”.', p.usage) +
-          '<p class="ob-privacy">' + icon('lock', 16) + '<span>Your usage stays on this phone. Margin doesn’t even have internet access.</span></p>' +
+          (ios
+            ? '<p class="ob-lede">To measure and limit apps, your iPhone asks you to allow Screen Time access for Margin.</p>' +
+              permCard('usage', 'Screen Time access', p.usage ? 'Allowed. Thank you.' : 'Tap Allow, then confirm in the window that appears.', p.usage) +
+              '<p class="ob-privacy">' + icon('lock', 16) + '<span>Your usage stays on this phone. Apple doesn’t even tell Margin which apps you use.</span></p>'
+            : '<p class="ob-lede">To measure how long you spend in each app, Android asks you to allow usage access for Margin.</p>' +
+              permCard('usage', 'Usage access', p.usage ? 'Allowed. Thank you.' : 'In the list that opens, choose Margin and turn on “Permit usage access”.', p.usage) +
+              '<p class="ob-privacy">' + icon('lock', 16) + '<span>Your usage stays on this phone. Margin doesn’t even have internet access.</span></p>') +
           (S.mode === 'demo' ? '<p class="ob-demo-note">Browser demo: tapping Allow simulates the permission.</p>' : ''),
-        primary: p.usage ? { label: 'Continue', action: 'ob-next' } : { label: 'Allow usage access', action: 'ob-perm', which: 'usage' },
+        primary: p.usage ? { label: 'Continue', action: 'ob-next' } : { label: ios ? 'Allow Screen Time access' : 'Allow usage access', action: 'ob-perm', which: 'usage' },
         secondary: p.usage ? null : { label: 'Not now', action: 'ob-next' }
       };
     },
 
     apps: function () {
+      if (S.ios) return iosApps();
       preselect();
       var ids = S.allIds();
       var suggested = ids.filter(function (id) { return S.app(id).suggested; });
@@ -216,10 +242,12 @@
           'Some phones pause apps in the background. Choose Margin and set it to Unrestricted.', false, true);
       }
       var missing = p.overlayNeeded && !p.overlay;
-      var title = p.overlayNeeded ? 'Let Margin close apps' : 'Keep Margin running';
+      var title = p.overlayNeeded ? 'Let Margin close apps' : S.ios ? 'Stay in the loop' : 'Keep Margin running';
       var lede = p.overlayNeeded
         ? 'When your allowance runs out, Margin shows a calm lock screen instead of the app. Android needs your OK for that.'
-        : 'Margin closes apps for you when time’s up. A couple of optional settings help it stay on time.';
+        : S.ios
+          ? 'Margin can give you a heads-up before time runs out, plus a short daily summary.'
+          : 'Margin closes apps for you when time’s up. A couple of optional settings help it stay on time.';
       return {
         body: '<p class="ob-eyebrow">' + (p.overlayNeeded ? 'Permission' : 'Almost there') + '</p>' +
           '<h1 class="ob-title">' + title + '</h1>' +
@@ -329,6 +357,7 @@
     M.ui.sheet.close();
     document.documentElement.className += ' onboarding';
     layer.classList.add('open');
+    if (M.app.syncNative) M.app.syncNative();
     render('forward');
     S.refreshApps();
     S.refreshUsage();
@@ -358,7 +387,7 @@
     onResume: function () {
       if (!active) return;
       var key = current();
-      if (key === 'usage' || key === 'blocking') {
+      if (key === 'usage' || key === 'blocking' || (S.ios && key === 'apps')) {
         // A step can disappear (e.g. nothing left to allow), so keep the index in range.
         index = Math.min(index, steps().length - 1);
         render(null);
@@ -368,7 +397,7 @@
     /** New data (app list, usage) while the app list is showing. */
     onData: function () {
       if (!active) return;
-      if (current() === 'apps' && S.allIds().length !== renderedApps) render(null);
+      if (current() === 'apps' && (S.ios || S.allIds().length !== renderedApps)) render(null);
     }
   };
 
@@ -380,6 +409,7 @@
     go(1);
   };
   A['ob-back'] = function () { go(-1); };
+  A['ob-pick-apps'] = function () { M.native.pickApps(); };
   A['ob-skip-name'] = function () { draft.name = ''; go(1); };
   A['ob-perm'] = function (el) {
     var which = el.getAttribute('data-which');
