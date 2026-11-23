@@ -1,0 +1,109 @@
+
+
+:root {
+  --backdrop: #E6E4DE;
+  --bg: #F5F4F0;
+  --surface: #FFFFFF;
+  --surface-2: #EDECE7;
+  --surface-3: #E1E0DA;
+  --ink: #151514;
+  --ink-2: #5D5C58;
+  --ink-3: #98968F;
+  --hairline: rgba(21, 21, 20, 0.08);
+  --hairline-strong: rgba(21, 21, 20, 0.14);
+
+  --accent: #2E6A58;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E1EBE6;
+  --accent-faint: rgba(46, 106, 88, 0.10);
+
+  --warn: #B0573B;
+  --warn-soft: #F3E4DD;
+
+  --tabbar-bg: rgba(245, 244, 240, 0.86);
+  --sheet-scrim: rgba(18, 18, 16, 0.32);
+  --chart-bar: #DAD8D1;
+  --icon-ink: #FFFFFF;
+
+  --shadow-card: 0 0 0 1px var(--hairline), 0 1px 2px rgba(20, 20, 18, 0.03);
+  --shadow-float: 0 10px 30px -12px rgba(20, 20, 18, 0.25), 0 0 0 1px var(--hairline);
+  --shadow-device: 0 40px 80px -30px rgba(20, 20, 18, 0.35);
+
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-sheet: 22px;
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --tabbar-h: 62px;
+  --top-pad: 16px;
+  --gutter: 20px;
+  --safe-top: 0px;
+  --safe-bottom: 0px;
+}
+
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --backdrop: #000000;
+    --bg: #0F0F0E;
+    --surface: #1A1A19;
+    --surface-2: #242422;
+    --surface-3: #2E2E2B;
+    --ink: #F3F2EE;
+    --ink-2: #A9A7A0;
+    --ink-3: #74726C;
+    --hairline: rgba(255, 255, 255, 0.08);
+    --hairline-strong: rgba(255, 255, 255, 0.14);
+    --accent: #7DB9A4;
+    --accent-ink: #0F1A16;
+    --accent-soft: #1F2E28;
+    --accent-faint: rgba(125, 185, 164, 0.12);
+    --warn: #E08A6C;
+    --warn-soft: #3A2620;
+    --tabbar-bg: rgba(15, 15, 14, 0.84);
+    --sheet-scrim: rgba(0, 0, 0, 0.55);
+    --chart-bar: #34342F;
+    --shadow-card: 0 0 0 1px var(--hairline);
+    --shadow-float: 0 10px 30px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--hairline);
+    --shadow-device: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+  }
+}
+
+:root[data-theme="dark"] {
+  --backdrop: #000000;
+  --bg: #0F0F0E;
+  --surface: #1A1A19;
+  --surface-2: #242422;
+  --surface-3: #2E2E2B;
+  --ink: #F3F2EE;
+  --ink-2: #A9A7A0;
+  --ink-3: #74726C;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.14);
+  --accent: #7DB9A4;
+  --accent-ink: #0F1A16;
+  --accent-soft: #1F2E28;
+  --accent-faint: rgba(125, 185, 164, 0.12);
+  --warn: #E08A6C;
+  --warn-soft: #3A2620;
+  --tabbar-bg: rgba(15, 15, 14, 0.84);
+  --sheet-scrim: rgba(0, 0, 0, 0.55);
+  --chart-bar: #34342F;
+  --shadow-card: 0 0 0 1px var(--hairline);
+  --shadow-float: 0 10px 30px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--hairline);
+  --shadow-device: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+}

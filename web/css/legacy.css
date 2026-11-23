@@ -1,0 +1,38 @@
+
+
+
+
+
+.no-flexgap .row > * + *,
+.no-flexgap .app-row > * + *,
+.no-flexgap .detail-id > * + *,
+.no-flexgap .profile > * + * { margin-left: 14px; }
+.no-flexgap .banner > * + *,
+.no-flexgap .sheet-head > * + * { margin-left: 12px; }
+.no-flexgap .tiles > * + *,
+.no-flexgap .time-pair > * + * { margin-left: 10px; }
+.no-flexgap .proto-grid > * + * { margin-left: 8px; }
+.no-flexgap .stepper > * + * { margin-left: 4px; }
+
+
+.no-flexgap .row.column > * + * { margin-left: 0; margin-top: 10px; }
+.no-flexgap .row-main > * + * { margin-top: 2px; }
+.no-flexgap .sheet-actions > * + * { margin-top: 10px; }
+.no-flexgap .lock-actions > * + * { margin-top: 6px; }
+.no-flexgap .metrics > * > * + *,
+.no-flexgap .summary-strip > * > * + * { margin-top: 4px; }
+.no-flexgap .tab > span { margin-top: 3px; }
+
+
+.no-flexgap .btn > svg { margin-right: 8px; }
+.no-flexgap .proto-grid .btn > svg { margin-right: 6px; }
+.no-flexgap .hold-label > svg { margin-right: 8px; }
+.no-flexgap .lock-brand > svg { margin-right: 6px; }
+.no-flexgap .delta > svg { margin-right: 3px; }
+.no-flexgap .back > svg { margin-right: 2px; }
+.no-flexgap .row-title > .pill { margin-left: 8px; }
+.no-flexgap .stat-hero-sub > .delta { margin-right: 6px; }
+
+
+.no-flexgap .chips { margin: -4px; }
+.no-flexgap .chips > * { margin: 4px; }
