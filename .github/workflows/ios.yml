@@ -50,9 +50,11 @@ jobs:
           grep -E "/ios/.*warning:" build.log | sed 's|.*/ios/||' | sort -u | head -60 || true
 
       - name: Take screenshots in the simulator
+        timeout-minutes: 20
         run: ios/scripts/screenshots.sh ios/build/Build/Products/Debug-iphonesimulator/Margin.app docs/screenshots
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: screenshots
           path: docs/screenshots
